@@ -94,24 +94,25 @@ class Sha256(HashAlgo):
 
 		return bin(int(hx, 16))[2:].zfill(expected_length)
 
-	def __add_padding(msg):
-		l = len(msg)
-		ext = Sha256.__MSG_BITS__ - ((len(msg) + Sha256.__OFFSET__) % Sha256.__MSG_BITS__)
+	def __add_padding(msg, pref=0):
+		l = len(msg) + pref * Sha256.__MSG_BITS__
+		ext = Sha256.__MSG_BITS__ - ((len(msg) + 1 + Sha256.__OFFSET__) % Sha256.__MSG_BITS__)
 
 		msg += '1'
-		for i in range(1, ext):
+		for i in range(ext):
 			msg += '0'
 		msg += bin(l)[2:].zfill(64)
 
 		return msg
 
-	def get_nbit_padding(msg):
-		msg = Sha256.__str_to_bin(msg)
-		return Sha256.__MSG_BITS__ - ((len(msg) + Sha256.__OFFSET__) % Sha256.__MSG_BITS__)
-
-	def update(self, s):
+	def get_nbit(s):
 		msg = Sha256.__str_to_bin(s)
-		msg = Sha256.__add_padding(msg)
+		return  len(msg), \
+				Sha256.__MSG_BITS__ - ((len(msg) + 1 + Sha256.__OFFSET__) % Sha256.__MSG_BITS__)
+
+	def update(self, s, pref=0):
+		msg = Sha256.__str_to_bin(s)
+		msg = Sha256.__add_padding(msg, pref)
 
 		while msg:
 			msg_block = []

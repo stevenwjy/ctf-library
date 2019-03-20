@@ -1,41 +1,41 @@
 def length_extension_attack(hash_algo):
 	if hash_algo == 'sha-256':
-		
 		from Sha256 import Sha256
+		
+		secret_length	= int(input('Enter unknown initial message length (in bits): '))
+		msg 			= input('Enter known initial message: ')
+		hash_val 		= input('Enter initial hash value: ')
 
-		c = input()
-		sign = input()
-		ext = input()
+		ext 			= input('Enter additional message: ')
 
-		l, lop = Sha256.get_nbit(c)
+		msg_ln, pad_ln = Sha256.get_nbit(msg)
 
-		ln  = hex(l + 256)[2:].zfill(16)
-		lop = (lop + 1 - 256 + 512) % 512
+		msg_ln  = hex(msg_ln + secret_length)[2:].zfill(16)
+		pad_ln = (pad_ln + 1 - secret_length + Sha256.__MSG_BITS__) % Sha256.__MSG_BITS__
 
-		if lop == 0:
-			lop = 512
-		lop = lop // 8
+		pad_ln = Sha256.__MSG_BITS__ if pad_ln == 0 else pad_ln
+		pad_ln = pad_ln // 8
 
-		print("extra padding: " + str(lop) + " bytes")
+		print("extra padding: " + str(pad_ln) + " bytes")
 
-		out = c + '%80'
-		for i in range(1, lop):
+		out = msg + '%80'
+		for i in range(1, pad_ln):
 			out += '%00'
 		for i in range(0, 16, 2):
-			out += '%' + ln[i:i+2]
+			out += '%' + msg_ln[i:i+2]
 		out += ext
 
-		print("final cookie:")
+		print("final msg:")
 		print(out)
 
 		init_digest = []
 		for i in range(8):
-			init_digest.append(int(sign[i * 8 : (i + 1) * 8], 16))
+			init_digest.append(int(hash_val[i * 8 : (i + 1) * 8], 16))
 
 		sha = Sha256(init_digest)
-		sha.update(ext, 3)
+		sha.update(ext, (secret_length + int(msg_ln, 16) + (pad_ln * 8)) // Sha256.__MSG_BITS__)
 
-		print("final signature:")
+		print("final hash value:")
 		print(sha.hexdigest())
 
 length_extension_attack('sha-256')
